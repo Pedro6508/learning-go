@@ -1,4 +1,4 @@
-package main
+package wordCounter
 
 import (
 	"bufio"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func main() {
+func Solution() {
 	wordCounter := make(
 		map[string]uint8,
 	)
@@ -16,8 +16,9 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 	line, err := reader.ReadString('\n')
 	wordArray := strings.Split(
-		strings.Replace(
-			strings.TrimSpace(line), `,`, "", -1,
+		strings.Replace( // Remove all comma char
+			strings.TrimSpace(line), // Remove all
+			`,`, "", -1,
 		), ` `)
 
 	if err == nil && len(wordArray) > 0 {
