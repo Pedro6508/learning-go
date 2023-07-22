@@ -1,3 +1,3 @@
 .idea/
-.localenv
+challenge4/.env.local
 go.sum

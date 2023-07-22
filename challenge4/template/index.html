@@ -14,6 +14,7 @@
         .main {
             height: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
         }
@@ -21,7 +22,12 @@
 </head>
 <body>
     <div class="main">
-        <h1>DATA</h1>
+        <div class="queue">
+            {{ range .Data }}
+                <h1>Nome: {{ .Name }}</h1>
+                <h2>Idade: {{ .Age}}</h2>
+            {{ end }}
+        </div>
     </div>
 </body>
 </html>
