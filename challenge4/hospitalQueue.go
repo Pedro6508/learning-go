@@ -1,10 +1,8 @@
 package hospitalQueue
 
 import (
-	"github.com/gin-gonic/gin"
-	"log"
-	"net/http"
-	"os"
+	"errors"
+	"strconv"
 )
 
 type Patient struct {
@@ -23,30 +21,98 @@ type HospitalQueue struct {
 	size  uint16
 }
 
-func (hq *HospitalQueue) add(patient Patient) {
-	if hq.first == nil || hq.last == nil {
-		hq.first = &QueuePosition{
-			data: patient,
-			next: nil,
-		}
-		hq.last = hq.first
-		hq.size = 1
-	} else {
-		hq.last.next = &QueuePosition{
-			data: patient,
-			next: nil,
-		}
-
-		hq.last = hq.last.next
-		hq.size = hq.size + 1
-	}
+func (pat *Patient) getFmtData() string {
+	return "Name: " + pat.Name + " Age: " + strconv.FormatInt(int64(pat.Age), 10)
 }
 
-func (hq *HospitalQueue) unroll() []Patient {
+func (hq *HospitalQueue) Reset(patients ...Patient) {
+	if len(patients) > 0 {
+		first := &QueuePosition{
+			data: patients[0],
+			next: nil,
+		}
+
+		hq.first = first
+		hq.last = first
+		hq.size = 1
+
+		for _, pat := range patients[1:] {
+			hq.Enqueue(pat)
+		}
+	}
+
+	hq.first = nil
+	hq.last = nil
+	hq.size = 0
+}
+
+func (hq *HospitalQueue) Dequeue() (Patient, error) {
+	first := hq.first
+
+	if first == nil {
+		return Patient{}, errors.New("empty Queue")
+	} else if first == hq.last {
+		hq.last = nil
+	}
+
+	hq.first = hq.first.next
+	hq.size -= 1
+
+	return first.data, nil
+}
+
+func (hq *HospitalQueue) Enqueue(patient Patient) {
+	patientPosition := QueuePosition{
+		data: patient,
+		next: nil,
+	}
+
+	if hq.size == 0 {
+
+		hq.first = &patientPosition
+		hq.last = &patientPosition
+		hq.size = 1
+
+		return
+	}
+
+	hq.last.next = &patientPosition
+	hq.last = &patientPosition
+	hq.size += 1
+}
+
+func (hq *HospitalQueue) New(patients ...Patient) (*HospitalQueue, error) {
+	if len(patients) > 0 {
+		first := &QueuePosition{
+			data: patients[0],
+			next: nil,
+		}
+
+		queue := HospitalQueue{
+			first: first,
+			last:  first,
+			size:  1,
+		}
+
+		for _, pat := range patients[1:] {
+			queue.Enqueue(pat)
+		}
+
+		return &queue, nil
+	}
+
+	return &HospitalQueue{
+		first: nil,
+		last:  nil,
+		size:  0,
+	}, nil
+}
+
+func (hq *HospitalQueue) Unroll() []Patient {
 	next := hq.first
 	unwoundQueue := make([]Patient, hq.size)
 
-	for i, _ := range unwoundQueue {
+	for i := range unwoundQueue {
 		if next != nil {
 			unwoundQueue[i] = next.data
 		} else {
@@ -61,45 +127,4 @@ func (hq *HospitalQueue) unroll() []Patient {
 	}
 
 	return unwoundQueue
-}
-
-type QueuePageData struct {
-	Data []Patient
-}
-
-func GinServer() {
-	port := os.Getenv("PORT")
-	htmlPath := os.Getenv("HTML_PATH")
-
-	if port != "" && htmlPath != "" {
-		sourceQueue := HospitalQueue{
-			first: nil,
-			last:  nil,
-			size:  0,
-		}
-		sourceQueue.add(Patient{
-			Name: "Lucas",
-			Age:  37,
-		})
-
-		sourceQueue.add(Patient{
-			Name: "Gabriel",
-			Age:  73,
-		})
-
-		testData := QueuePageData{
-			Data: sourceQueue.unroll(),
-		}
-
-		router := gin.Default()
-		router.LoadHTMLGlob(htmlPath)
-
-		router.GET("/test", func(context *gin.Context) {
-			context.HTML(http.StatusOK, "index.html", testData)
-		})
-
-		router.Run(":" + port)
-	} else {
-		log.Fatal("No port defined!")
-	}
 }

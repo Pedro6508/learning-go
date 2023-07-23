@@ -18,15 +18,38 @@
             justify-content: center;
             align-items: center;
         }
+
+        .data-label {
+            font-weight: bold;
+        }
+
+        .queue-view {
+            background-color: gray;
+            border: 2px gray;
+
+            width: 400px;
+            height: 700px;
+
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
 <body>
     <div class="main">
-        <div class="queue">
-            {{ range .Data }}
-                <h1>Nome: {{ .Name }}</h1>
-                <h2>Idade: {{ .Age}}</h2>
-            {{ end }}
+        <div class="queue-view">
+            <table >
+                <tr class="data-label">
+                    <td>Nome</td>
+                    <td>Idade</td>
+                </tr>
+                {{ range .Data }}
+                    <tr class="data-item">
+                        <td>{{ .Name }}</td>
+                        <td>{{ .Age}}</td>
+                    </tr>
+                {{ end }}
+            </table>
         </div>
     </div>
 </body>
