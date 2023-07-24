@@ -11,7 +11,6 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -34,28 +33,7 @@ type DataDistribution struct {
 	sampleSpace int
 	mean        int
 	deviation   int
-	counter     CounterChan
-}
-
-func (dd *DataDistribution) new(enqOdd int, deqOdd int, mean int) DataDistribution {
-	sampleSpace := enqOdd + deqOdd
-	p := float64(enqOdd) / float64(sampleSpace)
-	n := float64(mean) / p
-
-	return DataDistribution{
-		enqueueOdd: enqOdd,
-		dequeueOdd: deqOdd,
-
-		sampleSpace: sampleSpace,
-		mean:        mean,
-		deviation:   int(math.Sqrt(n * p * (1 - p))),
-		counter: CounterChan{
-			setZero:   nil,
-			increment: nil,
-			decrement: nil,
-			value:     0,
-		},
-	}
+	counter     chan int
 }
 
 var wg sync.WaitGroup
@@ -64,7 +42,8 @@ var threadProfile = pprof.Lookup("threadProfile")
 
 func init() {
 	runtime.GOMAXPROCS(int(math.Max(
-		1, float64(runtime.NumCPU()/2),
+		1,
+		float64(runtime.NumCPU()/2),
 	)))
 }
 
@@ -87,22 +66,39 @@ func randPatient() Patient {
 	}
 }
 
+func (dd *DataDistribution) new(enqOdd int, deqOdd int, mean int) DataDistribution {
+	sampleSpace := enqOdd + deqOdd
+	p := float64(enqOdd) / float64(sampleSpace)
+	n := float64(mean) / p
+
+	return DataDistribution{
+		enqueueOdd: enqOdd,
+		dequeueOdd: deqOdd,
+
+		sampleSpace: sampleSpace,
+		mean:        mean,
+		deviation:   int(math.Sqrt(n * p * (1 - p))),
+		counter:     make(chan int),
+	}
+}
+
 func fillQueue(sourceQueue *HospitalQueue, dataDist *DataDistribution) {
-	if dataDist.counter.value < dataDist.deviation {
+
+	if (<-dataDist.counter) < dataDist.deviation {
 		randSample := rand.Intn(dataDist.sampleSpace+1) + 1
 		if randSample < dataDist.enqueueOdd {
 			pat := randPatient()
 			sourceQueue.Enqueue(pat)
 			fmt.Println("\t |enq|" + pat.getFmtData())
 
-			dataDist.counter.increment <- true
+			dataDist.counter <- (<-dataDist.counter) + 1
 		} else {
 			pat, err := sourceQueue.Dequeue()
 
 			if err == nil {
 				fmt.Println("\t |deq|" + pat.getFmtData())
 
-				dataDist.counter.increment <- true
+				dataDist.counter <- (<-dataDist.counter) - 1
 			} else {
 				fmt.Println("\t |err|" + err.Error())
 			}
@@ -110,40 +106,20 @@ func fillQueue(sourceQueue *HospitalQueue, dataDist *DataDistribution) {
 	} else {
 		sourceQueue.Reset(
 			randPatientArray(dataDist.deviation)...)
-		dataDist.counter.setZero <- true
+		dataDist.counter <- 0
 		fmt.Println("\t |Deviation compensation| QUEUE RESET")
 	}
 
-	fmt.Println("\t |Thread count|" + strconv.FormatInt(
-		int64(threadProfile.Count()), 10) + "\n")
 	time.Sleep(time.Second)
 	defer wg.Done()
 }
 
-func (c *CounterChan) sync() {
-	increment := <-c.increment
-	decrement := <-c.decrement
-	setZero := <-c.setZero
-
-	if setZero == false {
-		if increment != decrement {
-			if increment {
-				c.value += 1
-			} else {
-				c.value -= 1
-			}
-		}
-	} else {
-		c.value = 0
-	}
-}
-
 func parallelFill(sourceQueue *HospitalQueue) {
 	dd := (&DataDistribution{}).new(8, 2, 20)
-	wg.Add(1)
 	for {
+		wg.Add(1)
+		println("Test")
 		fillQueue(sourceQueue, &dd)
-		dd.counter.sync()
 	}
 }
 
@@ -165,7 +141,6 @@ func GinServer() {
 		router.LoadHTMLGlob(htmlPath)
 
 		router.GET("/view", func(context *gin.Context) {
-			wg.Add(1)
 			context.HTML(
 				http.StatusOK,
 				"index.html",
