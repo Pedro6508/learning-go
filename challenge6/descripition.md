@@ -16,5 +16,5 @@ A parte principal da API descrita no [material de apoio](https://www.vultr.com/d
 Segue o passo a passo:
 - Importar o pakage ```library``` no seu arquivo ```main.go``` e chamar a função ```RunSystem```.
 - Instale todas as dependencia do código, isso pode ser feito usando o comando ```go get [url da dependecia]``` para cada depencia ou simplesmente ```go get```para instalar todas de uma vez.
-- Iniciar o container com banco de dados usando o comando ```docker compose up db```.
+- Baixar a imagem do postgress para o docker usando o comando ```docker pull postgres``` e depois iniciar o container com o comando ```docker compose up db```.
 - Rodar seu programa ```main.go```.
