@@ -140,7 +140,7 @@ func GinServer() {
 		router := gin.Default()
 		router.LoadHTMLGlob(htmlPath)
 
-		router.GET("/view", func(context *gin.Context) {
+		router.GET("/template", func(context *gin.Context) {
 			context.HTML(
 				http.StatusOK,
 				"index.html",

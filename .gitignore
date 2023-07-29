@@ -1,3 +1,4 @@
 .idea/
 challenge4/.env.local
 go.sum
+go.mod/

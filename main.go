@@ -1,7 +1,7 @@
 package main
 
-import movieWar "LearnGo/challenge5"
+import helloFiber "LearnGo/challenge6"
 
 func main() {
-	movieWar.EnviarTarefas()
+	helloFiber.Hello()
 }

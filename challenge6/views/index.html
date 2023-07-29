@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ .title }}</title>
+    <style>
+        body {
+            width: 100vw;
+            height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+
+        .main {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .book-box {
+            background-color: gray;
+            border: 5px solid gray;
+            margin-bottom: 5px;
+            padding: 30px;
+        }
+
+        .book-array-box {
+            background-color: cadetblue;
+            height: 300px;
+            width: 300px;
+            padding: 40px;
+            overflow: scroll;
+            overflow-scrolling: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <h1>Livros</h1>
+        <div class="book-array-box">
+            {{ range .data }}
+                <div class="book-box">
+                    <h2>{{ .Title }}</h2>
+                    <h3>{{ .Author }}</h3>
+                    <h3>{{ .Publisher }}</h3>
+                </div>
+            {{ end }}
+        </div>
+    </div>
+</body>
+</html>
